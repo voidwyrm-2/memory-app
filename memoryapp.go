@@ -2,6 +2,7 @@ package memoryapp
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -120,21 +121,23 @@ func (m *Memory) forceWrite(cell uint32, value int) {
 }
 
 // allocates a range of memory
-func (m *Memory) Allocate(name string, size uint32, _type AllocEntryType, isWritable, isLoadable bool) error {
+func (m *Memory) Allocate(name string, size uint32, _type AllocEntryType, isWritable, isLoadable bool) {
 	var preoffset = m.getLatestOpenCell()
 	if size > m.memSize {
-		return fmt.Errorf("allocation area size %d is larger than the memory size %d", size, m.memSize)
+		fmt.Println(fmt.Errorf("allocation area size %d is larger than the memory size %d", size, m.memSize))
+		os.Exit(0)
 	}
 	if _, ok := m.allocations[name]; ok {
-		return fmt.Errorf("allocation area %s already exists", name)
+		fmt.Println(fmt.Errorf("allocation area %s already exists", name).Error())
+		os.Exit(0)
 	}
 	m.allocations[name] = NewAllocEntry(preoffset, (preoffset+size)-1, _type, isWritable, isLoadable)
-	return nil
 }
 
 func (m *Memory) Deallocate(name string) error {
 	if err := m.validateAllocation(name, _ANY); err != nil {
-		return err
+		fmt.Println(err.Error())
+		os.Exit(0)
 	}
 
 	allocStart := m.allocations[name].start
@@ -148,31 +151,34 @@ func (m *Memory) Deallocate(name string) error {
 
 func (m Memory) Addi(dstCell, srcCell uint32, immediate int) error {
 	if err := m.validateCell(dstCell, "dst cell", true); err != nil {
-		return err
+		fmt.Println(err.Error())
+		os.Exit(0)
 	}
 	if err := m.validateCell(srcCell, "src cell 1", false); err != nil {
-		return err
+		fmt.Println(err.Error())
+		os.Exit(0)
 	}
 
 	m.forceWrite(dstCell, m.getCell(srcCell)+immediate)
 	return nil
 }
 
-func (m Memory) Pushi(dstAlloc string, immediate int) error {
+func (m Memory) Pushi(dstAlloc string, immediate int) {
 	if err := m.validateAllocation(dstAlloc, STACK); err != nil {
-		return err
+		fmt.Println(err.Error())
+		os.Exit(0)
 	}
 
 	m.forceWrite(m.allocations[dstAlloc].start+m.allocations[dstAlloc].stackPointer, immediate)
 	__temp := m.allocations[dstAlloc].Copy()
 	__temp.stackPointer++
 	m.allocations[dstAlloc] = __temp
-	return nil
 }
 
-func (m Memory) Pop(dstCell uint32, srcAlloc string) error {
+func (m Memory) Pop(dstCell uint32, srcAlloc string) {
 	if err := m.validateAllocation(srcAlloc, STACK); err != nil {
-		return err
+		fmt.Println(err.Error())
+		os.Exit(0)
 	}
 
 	__temp := m.allocations[srcAlloc].Copy()
@@ -182,15 +188,15 @@ func (m Memory) Pop(dstCell uint32, srcAlloc string) error {
 	m.Mov(dstCell, m.allocations[srcAlloc].start+m.allocations[srcAlloc].stackPointer)
 
 	m.forceWrite(m.allocations[srcAlloc].start+m.allocations[srcAlloc].stackPointer, 0)
-	return nil
 }
 
-func (m Memory) Add(dstCell, srcCell1, srcCell2 uint32) error {
+func (m Memory) Add(dstCell, srcCell1, srcCell2 uint32) {
 	if err := m.validateCell(srcCell2, "src cell 2", false); err != nil {
-		return err
+		fmt.Println(err.Error())
+		os.Exit(0)
 	}
 
-	return m.Addi(dstCell, srcCell1, m.getCell(srcCell2))
+	m.Addi(dstCell, srcCell1, m.getCell(srcCell2))
 }
 
 /*
@@ -198,9 +204,8 @@ Copies a value from cell `srcCell` to cell `dstCell`
 
 Technically just an alias for `Memory.Addi([dstCell], [srcCell], 0)`
 */
-func (m Memory) Mov(dstCell, srcCell uint32) error {
+func (m Memory) Mov(dstCell, srcCell uint32) {
 	m.Addi(dstCell, srcCell, 0)
-	return nil
 }
 
 func NewMemory(memSize uint32) Memory {

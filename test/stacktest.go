@@ -1,17 +1,17 @@
 package main
 
 import (
-	ma "github.com/voidwyrm-2/memory-app"
+	memoryapp "github.com/voidwyrm-2/memory-app"
 )
 
-func theStack() {
-	var memory = ma.NewMemory(64)
+func stacktest() {
+	var memory = memoryapp.NewMemory(64)
 
 	// allocate a new area of memory to store some extra values we need
-	memory.Allocate("misc", 9, ma.NORMAL, true, true)
+	memory.Allocate("misc", 9, memoryapp.NORMAL, true, true)
 
 	// allocate a new area of memory as a stack, with a size of 10
-	memory.Allocate("stack", 10, ma.STACK, false, true)
+	memory.Allocate("stack", 10, memoryapp.STACK, false, true)
 
 	memory.PrintMemory(true)
 
