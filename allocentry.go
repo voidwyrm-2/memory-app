@@ -1,4 +1,4 @@
-package memoryapp
+package memoryplayground
 
 type AllocEntry struct {
 	start uint32
